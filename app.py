@@ -76,7 +76,7 @@ HTML = """
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
   <link rel="manifest" href="/manifest.json">
-  <title>Tiny Capital Club StockPulse Pro</title>
+  <title><div id="brandHeaderRow" style="display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:12px;margin:2px auto 12px auto;text-align:center;"><img src="/static/logo.png" alt="Tiny Capital Club Logo" style="width:52px;height:52px;min-width:52px;border-radius:50%;object-fit:cover;border:2px solid #f59e0b;flex-shrink:0;" /><h2 style="margin:0;line-height:1.2;display:inline-flex;align-items:center;">Tiny Capital Club StockPulse Pro</h2></div></title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; margin: 14px; background: #0f172a; color: #f1f5f9; }
@@ -119,7 +119,7 @@ HTML = """
     </div>
   </div>
 
-  <div id="centeredLogoOnly" style="display:flex;justify-content:center;align-items:center;margin:8px 0;"><img src="/static/logo.png" alt="Tiny Capital Club Logo" style="width:52px;height:52px;min-width:52px;border-radius:50%;object-fit:cover;border:2px solid #f59e0b;flex-shrink:0;" /></div>
+  <div id="centeredLogoOnly" style="display:flex;justify-content:center;align-items:center;margin:8px 0;"></div>
     <form method="POST" class="form-row" id="analyzeForm">
     <input type="text" id="tickerInput" name="ticker" value="{{ ticker }}" placeholder="e.g. NTPC.NS, RELIANCE.NS" required>
     <select name="period">
