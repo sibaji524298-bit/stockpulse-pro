@@ -113,15 +113,14 @@ HTML = """
 </head>
 <body>
   <div class="top-bar">
-    <h2>Tiny Capital Club StockPulse Pro</h2>
+    <div id="inlineBrandBar" style="display:flex;align-items:center;justify-content:flex-start;gap:14px;margin:6px 0 12px 0;"><img src="/static/logo.png" alt="Tiny Capital Club Logo" style="width:88px;height:88px;min-width:88px;border-radius:50%;object-fit:cover;border:2px solid #f59e0b;flex-shrink:0;" /><h2>Tiny Capital Club StockPulse Pro</h2></div>
     <div class="refresh-box">
       <span id="refreshStatus">Auto-refresh in 20s</span>
       <button type="button" id="toggleRefreshBtn" class="btn-secondary">Pause</button>
     </div>
   </div>
 
-  <div id="centeredLogoOnly" style="display:flex;justify-content:center;align-items:center;margin:8px 0;"><img src="/static/logo.png" alt="Tiny Capital Club Logo" style="width:52px;height:52px;min-width:52px;border-radius:50%;object-fit:cover;border:2px solid #f59e0b;flex-shrink:0;" /></div>
-    <form method="POST" class="form-row" id="analyzeForm">
+  <form method="POST" class="form-row" id="analyzeForm">
     <input type="text" id="tickerInput" name="ticker" value="{{ ticker }}" placeholder="e.g. NTPC.NS, RELIANCE.NS" required>
     <select name="period">
         <option value="30m" {% if period == "30m" %}selected{% endif %}>30m</option>
