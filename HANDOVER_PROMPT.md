@@ -43,3 +43,9 @@ Continue working on **TinyCapitalCapital StockPulse Pro** ("Small Capital. Big D
 - Added `indicators_rules.json` (104 indicators from Sheet1 + 6 weighted families & score scale from Sheet2) and `indicator_engine.py` with anti-redundancy and repainting guardrails.
 - Wired Option A composite verdict (`-2.00` to `+2.00`), 6 family score pills, and searchable 104-indicator reference table into `app.py` while keeping header, `88px` logo, title, `20s` refresh, `30m`–`max` lookback, colors, and chart intact.
 - Ensured `openpyxl` is listed in `requirements.txt`.
+
+---
+## Lookback & Data-Fetch Alignment Update (Nov 20, 2026)
+- Aligned lookback resolution (`30m` through `max`), interval mapping, and a short-lived `(symbol, period, interval)` fetch cache in `app.py` so the Majority Rule Composite Verdict panel and chart analyze consistent bars.
+- Added active `period / interval · N bars` context to the Majority Rule verdict header.
+- Refreshed local backup (`app.py.bak`) and device shared storage backup (`~/storage/shared/StockPulse_Backup`).
