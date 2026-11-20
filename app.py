@@ -76,7 +76,7 @@ HTML = """
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
   <link rel="manifest" href="/manifest.json">
-  <title>TinyCapitalCapital StockPulse Pro</title>
+  <title>Tiny Capital Club StockPulse Pro</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; margin: 14px; background: #0f172a; color: #f1f5f9; }
@@ -113,9 +113,9 @@ HTML = """
 </head>
 <body>
   <div class="top-bar">
-    <div id="brandHeaderRow" style="display:flex;align-items:center;gap:12px;margin-top:-4px;margin-bottom:6px;"><img src="/static/logo.png" alt="TinyCapitalClub Logo" style="width:52px;height:52px;min-width:52px;border-radius:50%;object-fit:cover;border:2px solid #f59e0b;transform:translateY(-3px);flex-shrink:0;" /><h2 style="margin:0;line-height:1.2;display:flex;align-items:center;">TinyCapitalCapital StockPulse Pro</h2></div>
+    <div id="brandHeaderRow" style="display:flex;align-items:center;gap:12px;margin-top:-4px;margin-bottom:6px;"><img src="/static/logo.png" alt="TinyCapitalClub Logo" style="width:52px;height:52px;min-width:52px;border-radius:50%;object-fit:cover;border:2px solid #f59e0b;transform:translateY(-3px);flex-shrink:0;" /><h2 style="margin:0;line-height:1.2;display:flex;align-items:center;">Tiny Capital Club StockPulse Pro</h2></div>
     <div class="refresh-box">
-      <span id="refreshStatus">Auto-refresh in 10s</span>
+      <span id="refreshStatus">Auto-refresh in 20s</span>
       <button type="button" id="toggleRefreshBtn" class="btn-secondary">Pause</button>
     </div>
   </div>
@@ -123,10 +123,18 @@ HTML = """
   <form method="POST" class="form-row" id="analyzeForm">
     <input type="text" id="tickerInput" name="ticker" value="{{ ticker }}" placeholder="e.g. NTPC.NS, RELIANCE.NS" required>
     <select name="period">
-      {% for p in ["3mo", "6mo", "1y", "2y"] %}
-        <option value="{{ p }}" {% if period == p %}selected{% endif %}>{{ p }}</option>
-      {% endfor %}
-    </select>
+        <option value="30m" {% if period == "30m" %}selected{% endif %}>30m</option>
+        <option value="1h" {% if period == "1h" %}selected{% endif %}>1h</option>
+        <option value="1d" {% if period == "1d" %}selected{% endif %}>1d</option>
+        <option value="1wk" {% if period == "1wk" %}selected{% endif %}>1wk</option>
+        <option value="1mo" {% if period == "1mo" %}selected{% endif %}>1mo</option>
+        <option value="3mo" {% if period == "3mo" %}selected{% endif %}>3mo</option>
+        <option value="6mo" {% if period == "6mo" %}selected{% endif %}>6mo</option>
+        <option value="1y" {% if period == "1y" %}selected{% endif %}>1y</option>
+        <option value="3y" {% if period == "3y" %}selected{% endif %}>3y</option>
+        <option value="5y" {% if period == "5y" %}selected{% endif %}>5y</option>
+        <option value="max" {% if period == "max" %}selected{% endif %}>max</option>
+      </select>
     <button type="submit">Run Analysis</button>
   </form>
 
@@ -311,7 +319,7 @@ HTML = """
 
   <script>
     let paused = false;
-    let secondsLeft = 10;
+    let secondsLeft = 20;
     const statusEl = document.getElementById('refreshStatus');
     const toggleBtn = document.getElementById('toggleRefreshBtn');
     const tickerInput = document.getElementById('tickerInput');
@@ -926,7 +934,7 @@ def icon_svg():
 def manifest():
     return app.response_class(
         response=json.dumps({
-            "name": "TinyCapitalCapital StockPulse Pro",
+            "name": "Tiny Capital Club StockPulse Pro",
             "short_name": "StockPulse Pro",
             "start_url": "/",
             "display": "standalone",
