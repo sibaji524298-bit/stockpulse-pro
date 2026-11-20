@@ -37,3 +37,9 @@ Continue working on **TinyCapitalCapital StockPulse Pro** ("Small Capital. Big D
 - Controls & Refresh: Lookback periods from 30m through max; 20s auto-refresh active.
 - Hosting: GitHub main branch (sibaji524298-bit/stockpulse-pro.git) deployed on Render (https://stockpulse-pro-80bo.onrender.com).
 - Backups: Updated app.py.bak and created a timestamped backup in ~/Stocks.
+
+---
+## Indicator Engine & Option A UI Update (Nov 20, 2026)
+- Added `indicators_rules.json` (104 indicators from Sheet1 + 6 weighted families & score scale from Sheet2) and `indicator_engine.py` with anti-redundancy and repainting guardrails.
+- Wired Option A composite verdict (`-2.00` to `+2.00`), 6 family score pills, and searchable 104-indicator reference table into `app.py` while keeping header, `88px` logo, title, `20s` refresh, `30m`–`max` lookback, colors, and chart intact.
+- Ensured `openpyxl` is listed in `requirements.txt`.

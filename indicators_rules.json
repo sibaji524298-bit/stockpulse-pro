@@ -1,0 +1,907 @@
+{
+  "families": [
+    {
+      "family": "Trend",
+      "weight": 0.3,
+      "covers": "MA systems, ADX/DMI, Ichimoku, SuperTrend, Aroon, Vortex",
+      "scoring_approach": "Normalize constituent scores to -2 to +2",
+      "guardrail": "Cap highly correlated MA indicators as one sub-group"
+    },
+    {
+      "family": "Momentum",
+      "weight": 0.2,
+      "covers": "RSI, MACD, Stochastic, CCI, ROC, TSI, TRIX",
+      "scoring_approach": "Use regime plus crossover/divergence",
+      "guardrail": "Do not count every oscillator as an independent vote"
+    },
+    {
+      "family": "Volume and Money Flow",
+      "weight": 0.2,
+      "covers": "Volume, OBV, CMF, A/D, MFI, PVT, VWMA",
+      "scoring_approach": "Confirm price move and participation",
+      "guardrail": "Price direction must accompany volume expansion"
+    },
+    {
+      "family": "Volatility and Regime",
+      "weight": 0.1,
+      "covers": "ATR, Bands Width, CHOP, HV, SD, SE",
+      "scoring_approach": "Score suitability/risk, not direction",
+      "guardrail": "Risk output may be neutral directionally"
+    },
+    {
+      "family": "Relative Strength and Breadth",
+      "weight": 0.1,
+      "covers": "Ratio, A/D breadth, correlations",
+      "scoring_approach": "Measure outperformance and participation",
+      "guardrail": "Correlation is not trend direction"
+    },
+    {
+      "family": "Structure and Levels",
+      "weight": 0.1,
+      "covers": "Pivots, profiles, fractals, Zig Zag, channels",
+      "scoring_approach": "Evaluate breaks, acceptance/rejection and invalidation",
+      "guardrail": "Use confirmed levels; Zig Zag can repaint"
+    }
+  ],
+  "score_scale": [
+    {
+      "score": -2,
+      "label": "Strong Bearish",
+      "interpretation": "Multiple confirmed bearish conditions"
+    },
+    {
+      "score": -1,
+      "label": "Bearish",
+      "interpretation": "Negative bias with partial confirmation"
+    },
+    {
+      "score": 0,
+      "label": "Neutral / Non-directional",
+      "interpretation": "No confirmed direction or risk-only metric"
+    },
+    {
+      "score": 1,
+      "label": "Bullish",
+      "interpretation": "Positive bias with partial confirmation"
+    },
+    {
+      "score": 2,
+      "label": "Strong Bullish",
+      "interpretation": "Multiple confirmed bullish conditions"
+    }
+  ],
+  "indicators": [
+    {
+      "no": 1,
+      "indicator": "Accumulation/Distribution",
+      "category": "Volume",
+      "parameters": "Standard A/D using H,L,C,Volume",
+      "rule": "Rising 5-bar A/D confirms accumulation; falling confirms distribution; prioritize bullish/bearish divergence versus price.",
+      "primary_use": "Directional confirmation"
+    },
+    {
+      "no": 2,
+      "indicator": "Accumulative Swing Index",
+      "category": "Trend",
+      "parameters": "Platform limit move; evaluate 14-20 bars",
+      "rule": "Rising ASI and break above its prior swing high is bullish; falling ASI and support break is bearish.",
+      "primary_use": "Breakout confirmation"
+    },
+    {
+      "no": 3,
+      "indicator": "Advance/Decline",
+      "category": "Breadth",
+      "parameters": "Daily advances minus declines; optional 20-day MA",
+      "rule": "Rising A/D line confirms broad participation; index rising while A/D falls is bearish divergence.",
+      "primary_use": "Market breadth"
+    },
+    {
+      "no": 4,
+      "indicator": "Arnaud Legoux Moving Average",
+      "category": "Trend",
+      "parameters": "Length 9; Offset 0.85; Sigma 6",
+      "rule": "Close above a rising ALMA is bullish; close below a falling ALMA is bearish.",
+      "primary_use": "Trend filter"
+    },
+    {
+      "no": 5,
+      "indicator": "Aroon",
+      "category": "Trend",
+      "parameters": "Length 25",
+      "rule": "Aroon Up >70 and above Down is bullish; Down >70 and above Up is bearish; both low suggests consolidation.",
+      "primary_use": "Trend emergence"
+    },
+    {
+      "no": 6,
+      "indicator": "Average Directional Index",
+      "category": "Trend",
+      "parameters": "ADX/DI length 14",
+      "rule": "ADX <20 weak; 20-25 developing; >25 trending. Direction comes from +DI versus -DI; favor a rising ADX.",
+      "primary_use": "Trend strength"
+    },
+    {
+      "no": 7,
+      "indicator": "Average Price",
+      "category": "Price",
+      "parameters": "(O+H+L+C)/4",
+      "rule": "Use as a reference only. Close above is mildly positive but not a standalone buy signal.",
+      "primary_use": "Reference price"
+    },
+    {
+      "no": 8,
+      "indicator": "Average True Range",
+      "category": "Volatility",
+      "parameters": "ATR 14",
+      "rule": "Non-directional. Use for risk and position sizing; typical stop distance 1.5-2.0 ATR adjusted to support and timeframe.",
+      "primary_use": "Risk sizing"
+    },
+    {
+      "no": 9,
+      "indicator": "Awesome Oscillator",
+      "category": "Momentum",
+      "parameters": "SMA 5 and 34 of median price",
+      "rule": "Above zero is bullish momentum; below zero bearish; use zero-line crosses or twin-peak patterns with trend confirmation.",
+      "primary_use": "Momentum confirmation"
+    },
+    {
+      "no": 10,
+      "indicator": "Balance of Power",
+      "category": "Momentum",
+      "parameters": "Length/smoothing 14",
+      "rule": "Above zero indicates buyer dominance; below zero seller dominance; divergence strengthens the signal.",
+      "primary_use": "Buying/selling pressure"
+    },
+    {
+      "no": 11,
+      "indicator": "Bollinger Bands",
+      "category": "Volatility",
+      "parameters": "SMA 20; 2 standard deviations",
+      "rule": "Lower/upper touches are not automatic trades. Use re-entry for mean reversion or high-volume band break for continuation.",
+      "primary_use": "Volatility and setups"
+    },
+    {
+      "no": 12,
+      "indicator": "Bollinger Bands %B",
+      "category": "Volatility",
+      "parameters": "Length 20; 2 standard deviations",
+      "rule": "<0 below lower band; >1 above upper band. Cross back inside can confirm reversal; >1 with volume can confirm breakout.",
+      "primary_use": "Band position"
+    },
+    {
+      "no": 13,
+      "indicator": "Bollinger Bands Width",
+      "category": "Volatility",
+      "parameters": "Length 20; 2 standard deviations",
+      "rule": "Historically low width signals a squeeze; expansion signals a volatility move. Obtain direction from price breakout.",
+      "primary_use": "Volatility regime"
+    },
+    {
+      "no": 14,
+      "indicator": "Chaikin Money Flow",
+      "category": "Volume",
+      "parameters": "Length 20 or 21",
+      "rule": "Above 0 accumulation; below 0 distribution. +/-0.05 filters noise; +/-0.10 is stronger. Prefer sustained readings.",
+      "primary_use": "Money flow"
+    },
+    {
+      "no": 15,
+      "indicator": "Chaikin Oscillator",
+      "category": "Volume",
+      "parameters": "EMA 3 and 10 of A/D",
+      "rule": "Above zero or bullish cross indicates improving money flow; below zero or bearish cross indicates deterioration.",
+      "primary_use": "Volume momentum"
+    },
+    {
+      "no": 16,
+      "indicator": "Chaikin Volatility",
+      "category": "Volatility",
+      "parameters": "EMA 10 of high-low range; ROC 10",
+      "rule": "Rising indicates range expansion and falling contraction; it does not determine direction.",
+      "primary_use": "Volatility change"
+    },
+    {
+      "no": 17,
+      "indicator": "Chande Kroll Stop",
+      "category": "Volatility",
+      "parameters": "ATR 10; Multiplier 1; Stop length 9",
+      "rule": "Bullish when price closes above the upper/short-position stop structure; bearish below lower/long-position stop. Confirm platform line names.",
+      "primary_use": "Trailing stop"
+    },
+    {
+      "no": 18,
+      "indicator": "Chande Momentum Oscillator",
+      "category": "Momentum",
+      "parameters": "Length 14",
+      "rule": "Above zero positive and below zero negative; +/-50 are strong/extreme. Use crosses back through extremes for reversal confirmation.",
+      "primary_use": "Momentum/reversal"
+    },
+    {
+      "no": 19,
+      "indicator": "Chop Zone",
+      "category": "Trend",
+      "parameters": "EMA 34; platform slope/angle colors",
+      "rule": "Use EMA slope/angle classification. Trend colors support directional entries; neutral colors indicate choppy conditions.",
+      "primary_use": "Trend regime"
+    },
+    {
+      "no": 20,
+      "indicator": "Choppiness Index",
+      "category": "Volatility",
+      "parameters": "Length 14",
+      "rule": "Above 61.8 is choppy; below 38.2 is trending. Use another indicator to determine direction.",
+      "primary_use": "Regime filter"
+    },
+    {
+      "no": 21,
+      "indicator": "Commodity Channel Index",
+      "category": "Momentum",
+      "parameters": "Length 20",
+      "rule": "Above +100 often confirms bullish momentum; below -100 bearish. Mean-reversion signal requires crossing back through the threshold.",
+      "primary_use": "Momentum/cycles"
+    },
+    {
+      "no": 22,
+      "indicator": "Connors RSI",
+      "category": "Momentum",
+      "parameters": "RSI 3; Streak RSI 2; Percent Rank 100",
+      "rule": "Below 20/10 is oversold/extreme and above 80/90 overbought/extreme; require price reversal confirmation.",
+      "primary_use": "Short-term timing"
+    },
+    {
+      "no": 23,
+      "indicator": "Coppock Curve",
+      "category": "Momentum",
+      "parameters": "ROC 14 + ROC 11; WMA 10",
+      "rule": "Best on weekly/monthly charts. Turning upward from below zero is bullish; negative alone is not a sell.",
+      "primary_use": "Long-term momentum"
+    },
+    {
+      "no": 24,
+      "indicator": "Correlation - Log",
+      "category": "Statistical",
+      "parameters": "20-60 periods of log returns versus named benchmark",
+      "rule": "Near +1 moves together; near 0 weak relation; near -1 inverse. Use for portfolio risk, not trend direction.",
+      "primary_use": "Correlation/risk"
+    },
+    {
+      "no": 25,
+      "indicator": "Correlation Coefficient",
+      "category": "Statistical",
+      "parameters": "20 or 60 periods versus named asset/benchmark",
+      "rule": "Above +0.7 high positive; -0.3 to +0.3 low; below -0.7 strong inverse. No standalone buy/sell.",
+      "primary_use": "Diversification"
+    },
+    {
+      "no": 26,
+      "indicator": "Detrended Price Oscillator",
+      "category": "Momentum",
+      "parameters": "Length 20",
+      "rule": "Use cycle peaks and troughs after trend removal; zero-line position alone is not a trade signal.",
+      "primary_use": "Cycle analysis"
+    },
+    {
+      "no": 27,
+      "indicator": "Directional Movement",
+      "category": "Trend",
+      "parameters": "DI length 14",
+      "rule": "+DI above -DI is bullish and reverse bearish; strongest when ADX is rising and above 25.",
+      "primary_use": "Trend direction"
+    },
+    {
+      "no": 28,
+      "indicator": "Donchian Channels",
+      "category": "Volatility",
+      "parameters": "20 periods; 55 for longer-term",
+      "rule": "Close above prior upper channel is bullish breakout; below prior lower channel bearish. Exclude current bar from channel.",
+      "primary_use": "Breakout system"
+    },
+    {
+      "no": 29,
+      "indicator": "Double EMA",
+      "category": "Trend",
+      "parameters": "DEMA 20 or 50",
+      "rule": "Close above a rising DEMA is bullish; below a falling DEMA bearish.",
+      "primary_use": "Low-lag trend"
+    },
+    {
+      "no": 30,
+      "indicator": "Ease Of Movement",
+      "category": "Volume",
+      "parameters": "Length 14",
+      "rule": "Above zero suggests upward movement with relative ease; below zero downward; use zero crosses and trend confirmation.",
+      "primary_use": "Price-volume efficiency"
+    },
+    {
+      "no": 31,
+      "indicator": "Elder's Force Index",
+      "category": "Volume",
+      "parameters": "EMA 13",
+      "rule": "Above zero buyers dominate; below zero sellers dominate; divergence can warn of weakening trend.",
+      "primary_use": "Volume momentum"
+    },
+    {
+      "no": 32,
+      "indicator": "EMA Cross",
+      "category": "Trend",
+      "parameters": "EMA 20 and EMA 50; optional 50/200",
+      "rule": "Bullish on actual fast-above-slow crossover and alignment; bearish on reverse. 50/200 is long-term confirmation.",
+      "primary_use": "Trend transition"
+    },
+    {
+      "no": 33,
+      "indicator": "Envelopes",
+      "category": "Volatility",
+      "parameters": "MA 20; +/-2.5% starting width",
+      "rule": "Calibrate width to volatility. Upper break can be strength, not automatic sell; use trend and reversal confirmation.",
+      "primary_use": "Extension/channel"
+    },
+    {
+      "no": 34,
+      "indicator": "Fisher Transform",
+      "category": "Momentum",
+      "parameters": "Length 9 or 10",
+      "rule": "Fisher crossing above trigger is bullish; below trigger bearish. Treat extremes as reversal setups only.",
+      "primary_use": "Turning points"
+    },
+    {
+      "no": 35,
+      "indicator": "Guppy Multiple Moving Average",
+      "category": "Trend",
+      "parameters": "Short 3,5,8,10,12,15; Long 30,35,40,45,50,60",
+      "rule": "Short group above and expanding away from long group is bullish; reverse is bearish; compression warns transition.",
+      "primary_use": "Trend quality"
+    },
+    {
+      "no": 36,
+      "indicator": "Historical Volatility",
+      "category": "Volatility",
+      "parameters": "20-day annualized SD of log returns",
+      "rule": "Compare current value with its 1-year percentile; rising means higher realized risk, not direction.",
+      "primary_use": "Risk regime"
+    },
+    {
+      "no": 37,
+      "indicator": "Hull Moving Average",
+      "category": "Trend",
+      "parameters": "HMA 20 or 55",
+      "rule": "Close above a rising HMA is bullish; below a falling HMA bearish; slope change can flag transition.",
+      "primary_use": "Low-lag trend"
+    },
+    {
+      "no": 38,
+      "indicator": "Ichimoku Cloud",
+      "category": "Trend",
+      "parameters": "9,26,52; displacement 26",
+      "rule": "Strong bullish: price above cloud, Tenkan above Kijun, bullish future cloud and Chikou confirmation; reverse bearish.",
+      "primary_use": "Complete trend system"
+    },
+    {
+      "no": 39,
+      "indicator": "Keltner Channels",
+      "category": "Volatility",
+      "parameters": "EMA 20; ATR 20; Multiplier 2",
+      "rule": "Upper-channel close can confirm strength; lower can confirm weakness. Mean reversion requires reversal and trend context.",
+      "primary_use": "Trend/volatility channel"
+    },
+    {
+      "no": 40,
+      "indicator": "Klinger Oscillator",
+      "category": "Volume",
+      "parameters": "Fast 34; Slow 55; Signal 13",
+      "rule": "KO crossing above signal is bullish and below bearish; zero-line position is secondary; monitor divergence.",
+      "primary_use": "Volume flow"
+    },
+    {
+      "no": 41,
+      "indicator": "Know Sure Thing",
+      "category": "Momentum",
+      "parameters": "ROC 10,15,20,30; SMA 10,10,10,15; Signal 9",
+      "rule": "KST above signal is bullish, especially above zero; below signal and zero is bearish.",
+      "primary_use": "Multi-horizon momentum"
+    },
+    {
+      "no": 42,
+      "indicator": "Least Squares Moving Average",
+      "category": "Trend",
+      "parameters": "Length 25",
+      "rule": "Close above a rising LSMA is bullish; below a falling LSMA bearish.",
+      "primary_use": "Statistical trend"
+    },
+    {
+      "no": 43,
+      "indicator": "Linear Regression Curve",
+      "category": "Trend",
+      "parameters": "Length 20-50",
+      "rule": "Bullish when price is above a rising regression curve; bearish below a falling curve; slope is essential.",
+      "primary_use": "Trend/reference"
+    },
+    {
+      "no": 44,
+      "indicator": "Linear Regression Slope",
+      "category": "Trend",
+      "parameters": "Length 20 or 50",
+      "rule": "Positive slope bullish, negative bearish; larger absolute value means stronger trend. Normalize for cross-stock comparison.",
+      "primary_use": "Trend strength"
+    },
+    {
+      "no": 45,
+      "indicator": "MA Cross",
+      "category": "Trend",
+      "parameters": "SMA 20/50 for swing; 50/200 long-term",
+      "rule": "Use actual crossover and alignment. Fast above slow is bullish; fast below slow bearish.",
+      "primary_use": "Trend transition"
+    },
+    {
+      "no": 46,
+      "indicator": "MA with EMA Cross",
+      "category": "Trend",
+      "parameters": "EMA 20 versus SMA 50",
+      "rule": "EMA above SMA with both rising is bullish; below with both falling bearish. Avoid equal 20/20 periods.",
+      "primary_use": "Trend transition"
+    },
+    {
+      "no": 47,
+      "indicator": "MACD",
+      "category": "Trend/Momentum",
+      "parameters": "12,26,9",
+      "rule": "MACD above signal is bullish; above zero strengthens it. Use histogram direction for acceleration and watch divergence.",
+      "primary_use": "Trend momentum"
+    },
+    {
+      "no": 48,
+      "indicator": "Majority Rule",
+      "category": "Summary",
+      "parameters": "Family-weighted score; not equal indicator tally",
+      "rule": "Aggregate normalized family scores to avoid double-counting correlated indicators. Suggested weights: Trend 30, Momentum 20, Volume 20, Volatility 10, Relative/Breadth 10, Structure 10.",
+      "primary_use": "Composite score"
+    },
+    {
+      "no": 49,
+      "indicator": "Mass Index",
+      "category": "Volatility",
+      "parameters": "EMA 9 ratio; Sum 25",
+      "rule": "Classic reversal bulge: rises above 27 then falls below 26.5. Predicts possible reversal, not direction.",
+      "primary_use": "Reversal warning"
+    },
+    {
+      "no": 50,
+      "indicator": "McGinley Dynamic",
+      "category": "Trend",
+      "parameters": "Length 14",
+      "rule": "Close above a rising McGinley line is bullish; below a falling line bearish.",
+      "primary_use": "Adaptive trend"
+    },
+    {
+      "no": 51,
+      "indicator": "Median Price",
+      "category": "Price",
+      "parameters": "(H+L)/2",
+      "rule": "Reference series only. Close above means upper half of range but is not a standalone buy.",
+      "primary_use": "Reference price"
+    },
+    {
+      "no": 52,
+      "indicator": "Momentum",
+      "category": "Momentum",
+      "parameters": "Length 10",
+      "rule": "Above zero and rising is bullish; below zero and falling bearish; divergence can warn of reversal.",
+      "primary_use": "Momentum"
+    },
+    {
+      "no": 53,
+      "indicator": "Money Flow Index",
+      "category": "Volume",
+      "parameters": "Length 14",
+      "rule": "Below 20 oversold and above 80 overbought. Require threshold re-cross, divergence or price confirmation; not automatic trades.",
+      "primary_use": "Price-volume momentum"
+    },
+    {
+      "no": 54,
+      "indicator": "Moving Average",
+      "category": "Trend",
+      "parameters": "SMA 20, 50, 200",
+      "rule": "Close above a rising MA is bullish; 20>50>200 is strong alignment; reverse is bearish.",
+      "primary_use": "Trend baseline"
+    },
+    {
+      "no": 55,
+      "indicator": "Moving Average Adaptive",
+      "category": "Trend",
+      "parameters": "KAMA 10; Fast 2; Slow 30",
+      "rule": "Close above a rising KAMA is bullish; below a falling KAMA bearish.",
+      "primary_use": "Adaptive trend"
+    },
+    {
+      "no": 56,
+      "indicator": "Moving Average Channel",
+      "category": "Trend",
+      "parameters": "MA 20 with +/-2% or ATR-based width",
+      "rule": "Close above upper channel is bullish breakout; below lower bearish. Do not use center MA alone.",
+      "primary_use": "Trend channel"
+    },
+    {
+      "no": 57,
+      "indicator": "Moving Average Double",
+      "category": "Trend",
+      "parameters": "DEMA 20",
+      "rule": "Close above a rising DEMA bullish; below falling DEMA bearish.",
+      "primary_use": "Low-lag trend"
+    },
+    {
+      "no": 58,
+      "indicator": "Moving Average Exponential",
+      "category": "Trend",
+      "parameters": "EMA 20, 50, 200",
+      "rule": "Close above rising EMA bullish; 20>50>200 strong bullish alignment; reverse bearish.",
+      "primary_use": "Trend baseline"
+    },
+    {
+      "no": 59,
+      "indicator": "Moving Average Hamming",
+      "category": "Trend",
+      "parameters": "Length 20",
+      "rule": "Close above a rising Hamming MA is bullish; below a falling line bearish.",
+      "primary_use": "Smoothed trend"
+    },
+    {
+      "no": 60,
+      "indicator": "Moving Average Multiple",
+      "category": "Trend",
+      "parameters": "10,20,50,100,200",
+      "rule": "Shorter MAs ordered above longer MAs confirms bullish trend quality; compression indicates transition.",
+      "primary_use": "Trend structure"
+    },
+    {
+      "no": 61,
+      "indicator": "Moving Average Triple",
+      "category": "Trend",
+      "parameters": "10,20,50 or platform triple-MA defaults",
+      "rule": "10>20>50 bullish; 10<20<50 bearish; mixed ordering neutral.",
+      "primary_use": "Trend structure"
+    },
+    {
+      "no": 62,
+      "indicator": "Moving Average Weighted",
+      "category": "Trend",
+      "parameters": "WMA 20 or 50",
+      "rule": "Close above a rising WMA is bullish; below a falling WMA bearish.",
+      "primary_use": "Responsive trend"
+    },
+    {
+      "no": 63,
+      "indicator": "Net Volume",
+      "category": "Volume",
+      "parameters": "Daily up-volume minus down-volume; smooth/cumulate 5-20 days",
+      "rule": "Positive and rising smoothed net volume supports buying pressure; negative and falling supports selling pressure.",
+      "primary_use": "Volume pressure"
+    },
+    {
+      "no": 64,
+      "indicator": "On Balance Volume",
+      "category": "Volume",
+      "parameters": "Standard OBV; optional 20-bar trend/MA",
+      "rule": "Rising OBV confirms accumulation; falling confirms distribution; divergence against price is important.",
+      "primary_use": "Accumulation confirmation"
+    },
+    {
+      "no": 65,
+      "indicator": "Parabolic SAR",
+      "category": "Trend",
+      "parameters": "Step 0.02; Maximum 0.20",
+      "rule": "Dots below price bullish and above bearish; use mainly in trends as trailing stop, not in choppy markets.",
+      "primary_use": "Trend/trailing stop"
+    },
+    {
+      "no": 66,
+      "indicator": "Pivot Points Standard",
+      "category": "Levels",
+      "parameters": "Prior day/week HLC; Standard pivots",
+      "rule": "Above PP gives bullish bias and below bearish; use S1-S3/R1-R3 for confirmation, targets and invalidation.",
+      "primary_use": "Support/resistance"
+    },
+    {
+      "no": 67,
+      "indicator": "Price Channel",
+      "category": "Volatility",
+      "parameters": "20-period prior high/low",
+      "rule": "Close above prior upper channel bullish; below prior lower channel bearish.",
+      "primary_use": "Breakout structure"
+    },
+    {
+      "no": 68,
+      "indicator": "Price Oscillator",
+      "category": "Momentum",
+      "parameters": "PPO 12/26 EMA; optional Signal 9",
+      "rule": "Above zero bullish and below bearish; prefer oscillator-signal crossover and clarify PPO versus absolute oscillator.",
+      "primary_use": "Momentum"
+    },
+    {
+      "no": 69,
+      "indicator": "Price Volume Trend",
+      "category": "Volume",
+      "parameters": "Standard PVT; optional 20-bar MA",
+      "rule": "Rising PVT confirms price rise; falling confirms decline; divergence indicates weak participation.",
+      "primary_use": "Volume confirmation"
+    },
+    {
+      "no": 70,
+      "indicator": "Rate Of Change",
+      "category": "Momentum",
+      "parameters": "ROC 12 or 20",
+      "rule": "Above zero positive momentum; below zero negative; use zero cross and slope, not level alone.",
+      "primary_use": "Momentum acceleration"
+    },
+    {
+      "no": 71,
+      "indicator": "Ratio",
+      "category": "Relative Strength",
+      "parameters": "Stock price divided by benchmark price",
+      "rule": "Rising ratio means outperformance; falling means underperformance. Name the benchmark explicitly.",
+      "primary_use": "Relative performance"
+    },
+    {
+      "no": 72,
+      "indicator": "Relative Strength Index",
+      "category": "Momentum",
+      "parameters": "RSI 14",
+      "rule": "Above 50 bullish regime and below 50 bearish. <30/>70 are conditions; require re-cross/divergence for reversal trades.",
+      "primary_use": "Momentum/regime"
+    },
+    {
+      "no": 73,
+      "indicator": "Relative Vigor Index",
+      "category": "Momentum",
+      "parameters": "Length 10; Signal 4",
+      "rule": "RVI crossing above signal bullish and below bearish; zero line is secondary confirmation.",
+      "primary_use": "Trend conviction"
+    },
+    {
+      "no": 74,
+      "indicator": "Relative Volatility Index",
+      "category": "Volatility",
+      "parameters": "Length 14",
+      "rule": "Above 50 favors upside volatility and below 50 downside; >60 bullish and <40 bearish bias. Original direction was reversed.",
+      "primary_use": "Volatility direction"
+    },
+    {
+      "no": 75,
+      "indicator": "SMI Ergodic Indicator/Oscillator",
+      "category": "Momentum",
+      "parameters": "Common 5,20,5; confirm platform",
+      "rule": "Main above signal and zero is bullish; below signal and zero bearish; use exact platform formula.",
+      "primary_use": "Momentum"
+    },
+    {
+      "no": 76,
+      "indicator": "Smoothed Moving Average",
+      "category": "Trend",
+      "parameters": "SMMA 20 or 50",
+      "rule": "Close above a rising SMMA bullish; below a falling SMMA bearish.",
+      "primary_use": "Longer trend"
+    },
+    {
+      "no": 77,
+      "indicator": "Spread",
+      "category": "Relative Value",
+      "parameters": "Difference between two named instruments/series",
+      "rule": "Rising spread indicates first instrument outperforming the second; falling indicates underperformance. High-low range is not generic spread.",
+      "primary_use": "Pairs/relative value"
+    },
+    {
+      "no": 78,
+      "indicator": "Standard Deviation",
+      "category": "Volatility",
+      "parameters": "20 periods; preferably on returns",
+      "rule": "Rising means higher dispersion/risk and falling means compression; compare with historical percentile. No direction.",
+      "primary_use": "Risk regime"
+    },
+    {
+      "no": 79,
+      "indicator": "Standard Error",
+      "category": "Statistical",
+      "parameters": "20 or 50-period regression standard error",
+      "rule": "Lower error means price follows the fitted trend closely; rising error means lower trend reliability.",
+      "primary_use": "Trend reliability"
+    },
+    {
+      "no": 80,
+      "indicator": "Standard Error Bands",
+      "category": "Statistical",
+      "parameters": "Regression length 21; +/-2 standard errors",
+      "rule": "Outside bands means statistical extension. Use regression slope plus re-entry or breakout confirmation.",
+      "primary_use": "Statistical bands"
+    },
+    {
+      "no": 81,
+      "indicator": "Stochastic",
+      "category": "Momentum",
+      "parameters": "14,3,3",
+      "rule": "Bullish when %K crosses above %D from below 20; bearish when %K crosses below %D from above 80.",
+      "primary_use": "Range timing"
+    },
+    {
+      "no": 82,
+      "indicator": "Stochastic RSI",
+      "category": "Momentum",
+      "parameters": "RSI 14; Stoch 14; K 3; D 3",
+      "rule": "Bullish crossover from below 0.2 and bearish crossover from above 0.8; confirm with trend because it is sensitive.",
+      "primary_use": "Short-term timing"
+    },
+    {
+      "no": 83,
+      "indicator": "SuperTrend",
+      "category": "Trend",
+      "parameters": "ATR 10; Multiplier 3",
+      "rule": "Price above green line is bullish and below red line bearish; use as trend filter/trailing stop.",
+      "primary_use": "Trend/trailing stop"
+    },
+    {
+      "no": 84,
+      "indicator": "Trend Strength Index",
+      "category": "Momentum",
+      "parameters": "Length 14 common; confirm exact platform implementation",
+      "rule": "Use platform-specific scale, signal line and thresholds. Do not assume universal zero-line rules without formula verification.",
+      "primary_use": "Trend strength"
+    },
+    {
+      "no": 85,
+      "indicator": "Triple EMA",
+      "category": "Trend",
+      "parameters": "TEMA 20",
+      "rule": "Close above a rising TEMA is bullish; below a falling TEMA bearish.",
+      "primary_use": "Low-lag trend"
+    },
+    {
+      "no": 86,
+      "indicator": "TRIX",
+      "category": "Momentum",
+      "parameters": "Length 15; Signal 9",
+      "rule": "TRIX above signal and zero bullish; below signal and zero bearish; divergence can warn of reversal.",
+      "primary_use": "Smoothed momentum"
+    },
+    {
+      "no": 87,
+      "indicator": "True Strength Index",
+      "category": "Momentum",
+      "parameters": "Long 25; Short 13; Signal 7",
+      "rule": "TSI above signal and zero bullish; below signal and zero bearish; monitor divergence.",
+      "primary_use": "Momentum"
+    },
+    {
+      "no": 88,
+      "indicator": "Typical Price",
+      "category": "Price",
+      "parameters": "(H+L+C)/3",
+      "rule": "Input/reference series for VWAP, MFI and CCI. It is not a useful standalone buy/sell rule.",
+      "primary_use": "Reference price"
+    },
+    {
+      "no": 89,
+      "indicator": "Ultimate Oscillator",
+      "category": "Momentum",
+      "parameters": "7,14,28; weights 4,2,1",
+      "rule": "Below 30 and above 70 are conditions. Bullish on cross back above 30 or bullish divergence; bearish on reverse.",
+      "primary_use": "Multi-period momentum"
+    },
+    {
+      "no": 90,
+      "indicator": "Volatility Close-to-Close",
+      "category": "Volatility",
+      "parameters": "20-day annualized close-return volatility; sqrt(252)",
+      "rule": "Compare with historical percentile and peers; measures realized risk, not direction.",
+      "primary_use": "Risk estimation"
+    },
+    {
+      "no": 91,
+      "indicator": "Volatility Index",
+      "category": "Volatility",
+      "parameters": "Confirm platform formula; for fear use VIX/India VIX separately",
+      "rule": "Do not equate automatically with ATR or market VIX. Interpret only after confirming the exact series/formula.",
+      "primary_use": "Risk regime"
+    },
+    {
+      "no": 92,
+      "indicator": "Volatility O-H-L-C",
+      "category": "Volatility",
+      "parameters": "20-day annualized OHLC estimator, e.g. Garman-Klass",
+      "rule": "Rising value means increasing realized risk; non-directional.",
+      "primary_use": "Risk estimation"
+    },
+    {
+      "no": 93,
+      "indicator": "Volatility Zero Trend Close-to-Close",
+      "category": "Volatility",
+      "parameters": "20-day zero-drift close-return variance; annualized",
+      "rule": "Use platform-defined zero-trend estimator; do not substitute mean absolute daily move. Non-directional.",
+      "primary_use": "Risk estimation"
+    },
+    {
+      "no": 94,
+      "indicator": "Volume",
+      "category": "Volume",
+      "parameters": "Daily volume versus 20-day average",
+      "rule": "Breakout volume >1.5x average is meaningful and >2x strong; direction comes from price.",
+      "primary_use": "Participation"
+    },
+    {
+      "no": 95,
+      "indicator": "Volume Oscillator",
+      "category": "Volume",
+      "parameters": "Fast 5; Slow 20",
+      "rule": "Above zero means short-term volume expansion; below zero contraction. Combine with price direction.",
+      "primary_use": "Volume regime"
+    },
+    {
+      "no": 96,
+      "indicator": "Volume Profile Fixed Range",
+      "category": "Volume",
+      "parameters": "Chosen swing/range; Value Area 70%",
+      "rule": "Analyze POC, VAH, VAL, HVNs and LVNs. Acceptance above POC/VAH may be bullish; rejection changes interpretation.",
+      "primary_use": "Volume-at-price levels"
+    },
+    {
+      "no": 97,
+      "indicator": "Volume Profile Visible Range",
+      "category": "Volume",
+      "parameters": "Visible chart range; Value Area 70%",
+      "rule": "Analyze POC, VAH/VAL and nodes for the current visible window; results change when the window changes.",
+      "primary_use": "Volume-at-price levels"
+    },
+    {
+      "no": 98,
+      "indicator": "Vortex Indicator",
+      "category": "Trend",
+      "parameters": "Length 14",
+      "rule": "VI+ crossing above VI- bullish; VI- above VI+ bearish; widening spread strengthens the signal.",
+      "primary_use": "Trend direction"
+    },
+    {
+      "no": 99,
+      "indicator": "VWAP",
+      "category": "Volume",
+      "parameters": "Session VWAP intraday; anchored VWAP for swing/event",
+      "rule": "Price above VWAP gives bullish bias and below bearish; prefer acceptance/retest and volume confirmation.",
+      "primary_use": "Institutional benchmark"
+    },
+    {
+      "no": 100,
+      "indicator": "VWMA",
+      "category": "Volume",
+      "parameters": "Length 20 or 50",
+      "rule": "Close above a rising VWMA bullish; below falling bearish. Compare with EMA to judge volume confirmation.",
+      "primary_use": "Volume-weighted trend"
+    },
+    {
+      "no": 101,
+      "indicator": "Williams %R",
+      "category": "Momentum",
+      "parameters": "Length 14",
+      "rule": "Bullish on cross back above -80; bearish on cross below -20. Extremes alone are not trades.",
+      "primary_use": "Short-term momentum"
+    },
+    {
+      "no": 102,
+      "indicator": "Williams Alligator",
+      "category": "Trend",
+      "parameters": "Jaw 13/8; Teeth 8/5; Lips 5/3",
+      "rule": "Lips>Teeth>Jaw with widening separation bullish; reverse bearish; intertwined lines mean no trend.",
+      "primary_use": "Trend formation"
+    },
+    {
+      "no": 103,
+      "indicator": "Williams Fractal",
+      "category": "Pattern",
+      "parameters": "Confirmed 5-bar fractal",
+      "rule": "Bullish only when price breaks above the latest confirmed upper fractal; bearish below latest confirmed lower fractal.",
+      "primary_use": "Swing structure"
+    },
+    {
+      "no": 104,
+      "indicator": "Zig Zag",
+      "category": "Pattern",
+      "parameters": "5% deviation starting point; platform depth/backstep",
+      "rule": "Use confirmed legs for higher-high/higher-low structure. Latest leg repaints and must not be used predictively.",
+      "primary_use": "Market structure"
+    }
+  ]
+}

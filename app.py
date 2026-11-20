@@ -946,6 +946,128 @@ def manifest():
         }),
         mimetype="application/json"
     )
+# === OPTION_A_INDICATORS_ENGINE_START ===
+import html as _html
+import yfinance as _yf
+from indicator_engine import evaluate_stock_indicators as _eval_stock_indicators
+
+_OPTION_A_HELPER_INSTALLED = True
+
+def _build_option_a_html(symbol_text: str, period_text: str = "1y") -> str:
+    try:
+        sym = (symbol_text or "TCS.NS").strip()
+        yf_period = period_text if period_text in {
+            "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"
+        } else "1y"
+        interval = "15m" if yf_period in ("1d", "5d") else "1d"
+        df = _yf.download(sym, period=yf_period, interval=interval, progress=False, auto_adjust=False)
+        if df is None or df.empty:
+            df = _yf.download(sym, period="6mo", interval="1d", progress=False, auto_adjust=False)
+        if df is None or df.empty:
+            return ""
+        if hasattr(df.columns, "nlevels") and df.columns.nlevels > 1:
+            df.columns = df.columns.get_level_values(0)
+
+        bench_sym = "^NSEI" if sym.upper().endswith(".NS") or sym.upper().endswith(".BO") else "^GSPC"
+        bench_df = None
+        try:
+            b = _yf.download(bench_sym, period=yf_period if yf_period != "1d" else "5d", interval=interval, progress=False, auto_adjust=False)
+            if b is not None and not b.empty:
+                if hasattr(b.columns, "nlevels") and b.columns.nlevels > 1:
+                    b.columns = b.columns.get_level_values(0)
+                bench_df = b
+        except Exception:
+            bench_df = None
+
+        res = _eval_stock_indicators(df, bench_df=bench_df, rules_path="indicators_rules.json")
+        comp = res["composite_score"]
+        verdict = _html.escape(str(res["verdict"]))
+        fscores = res["family_scores"]
+        weights = res["weights"]
+        metrics = res["metrics"]
+        catalog = res["catalog"]
+
+        pills = []
+        for fam, w in weights.items():
+            sc = fscores.get(fam, 0.0)
+            pct = int(round(float(w) * 100))
+            pills.append(
+                f'<div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px 12px;min-width:165px;">'
+                f'<div style="font-size:12px;color:#9ca3af;">{_html.escape(fam)} ({pct}%)</div>'
+                f'<div style="font-size:16px;font-weight:700;color:#f3f4f6;">{sc:+.2f}</div>'
+                f'</div>'
+            )
+
+        rows_html = []
+        for item in catalog:
+            search_blob = (
+                f'{item.get("no", "")} {item.get("indicator", "")} {item.get("category", "")} '
+                f'{item.get("primary_use", "")} {item.get("rule", "")}'
+            ).lower()
+            rows_html.append(
+                f'<tr class="spp-ind-row" data-search="{_html.escape(search_blob)}">'
+                f'<td style="padding:6px 8px;border-bottom:1px solid #21262d;">{_html.escape(str(item.get("no", "")))}</td>'
+                f'<td style="padding:6px 8px;border-bottom:1px solid #21262d;font-weight:600;">{_html.escape(str(item.get("indicator", "")))}</td>'
+                f'<td style="padding:6px 8px;border-bottom:1px solid #21262d;">{_html.escape(str(item.get("category", "")))}</td>'
+                f'<td style="padding:6px 8px;border-bottom:1px solid #21262d;">{_html.escape(str(item.get("parameters", "")))}</td>'
+                f'<td style="padding:6px 8px;border-bottom:1px solid #21262d;">{_html.escape(str(item.get("rule", "")))}</td>'
+                f'<td style="padding:6px 8px;border-bottom:1px solid #21262d;">{_html.escape(str(item.get("primary_use", "")))}</td>'
+                f'</tr>'
+            )
+
+        search_js = (
+            "(function(q){q=q.toLowerCase().trim();"
+            "document.querySelectorAll('.spp-ind-row').forEach(function(r){"
+            "r.style.display=!q||r.getAttribute('data-search').indexOf(q)!==-1?'':'none';"
+            "});})(this.value)"
+        )
+
+        return (
+            f'<section id="stockpulseOptionAPanel" style="margin:18px 0;padding:16px;border:1px solid #30363d;border-radius:12px;background:#0d1117;color:#e6edf3;">'
+            f'<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;">'
+            f'<div>'
+            f'<div style="font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#f59e0b;">Majority Rule Composite Verdict ({_html.escape(sym)})</div>'
+            f'<div style="font-size:22px;font-weight:700;margin-top:2px;">{comp:+.2f} / 2.00 — {verdict}</div>'
+            f'</div>'
+            f'<div style="font-size:12px;color:#9ca3af;">RSI(14): {metrics["rsi14"]} | ADX(14): {metrics["adx14"]} | CMF(20): {metrics["cmf20"]} | Vol Ratio: {metrics["vol_ratio"]}x | ATR(14): {metrics["atr14"]}</div>'
+            f'</div>'
+            f'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">' + "".join(pills) + f'</div>'
+            f'<details style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px;">'
+            f'<summary style="cursor:pointer;font-weight:600;">104-Indicator Reference Catalog (Searchable)</summary>'
+            f'<div style="margin:10px 0;">'
+            f'<input id="sppIndicatorSearch" type="text" placeholder="Filter 104 indicators by name, category, rule, or primary use..." '
+            f'oninput="{_html.escape(search_js, quote=True)}" '
+            f'style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#e6edf3;" />'
+            f'</div>'
+            f'<div style="overflow-x:auto;max-height:420px;">'
+            f'<table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;">'
+            f'<thead><tr style="border-bottom:1px solid #30363d;color:#9ca3af;">'
+            f'<th style="padding:6px 8px;">#</th><th style="padding:6px 8px;">Indicator</th><th style="padding:6px 8px;">Category</th>'
+            f'<th style="padding:6px 8px;">Parameters</th><th style="padding:6px 8px;">Validated Rule</th><th style="padding:6px 8px;">Primary Use</th>'
+            f'</tr></thead>'
+            f'<tbody>' + "".join(rows_html) + f'</tbody></table></div></details></section>'
+        )
+    except Exception:
+        return ""
+
+@app.after_request
+def _inject_option_a_panel(response):
+    try:
+        ctype = response.content_type or ""
+        if response.status_code == 200 and "text/html" in ctype:
+            body = response.get_data(as_text=True)
+            if "</body>" in body and "stockpulseOptionAPanel" not in body:
+                from flask import request as _req
+                sym = _req.args.get("symbol") or _req.args.get("ticker") or (_req.form.get("symbol") if _req.form else None) or "TCS.NS"
+                per = _req.args.get("period") or (_req.form.get("period") if _req.form else None) or "1y"
+                panel = _build_option_a_html(sym, per)
+                if panel:
+                    body = body.replace("</body>", panel + "\n</body>", 1)
+                    response.set_data(body)
+    except Exception:
+        pass
+    return response
+# === OPTION_A_INDICATORS_ENGINE_END ===
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=False)
