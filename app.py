@@ -113,7 +113,7 @@ HTML = """
 </head>
 <body>
   <div class="top-bar">
-    <h2>TinyCapitalCapital StockPulse Pro</h2>
+    <div id="brandHeaderRow" style="display:flex;align-items:center;gap:12px;margin-top:-4px;margin-bottom:6px;"><img src="/static/logo.png" alt="TinyCapitalClub Logo" style="width:52px;height:52px;min-width:52px;border-radius:50%;object-fit:cover;border:2px solid #f59e0b;transform:translateY(-3px);flex-shrink:0;" /><h2 style="margin:0;line-height:1.2;display:flex;align-items:center;">TinyCapitalCapital StockPulse Pro</h2></div>
     <div class="refresh-box">
       <span id="refreshStatus">Auto-refresh in 10s</span>
       <button type="button" id="toggleRefreshBtn" class="btn-secondary">Pause</button>
