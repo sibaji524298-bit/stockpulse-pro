@@ -29,3 +29,11 @@ Continue working on **TinyCapitalCapital StockPulse Pro** ("Small Capital. Big D
 ## Update (Nov 20, 2026)
 - Aligned logo in header, set 20s refresh, expanded lookback periods to 30m..max.
 - Pushed to origin/main for Render deploy.
+
+---
+## Deployment Update (Nov 20, 2026)
+- App Title: Tiny Capital Club StockPulse Pro.
+- Header Logo: 88px circular logo aligned inline with the title using static/logo.png.
+- Controls & Refresh: Lookback periods from 30m through max; 20s auto-refresh active.
+- Hosting: GitHub main branch (sibaji524298-bit/stockpulse-pro.git) deployed on Render (https://stockpulse-pro-80bo.onrender.com).
+- Backups: Updated app.py.bak and created a timestamped backup in ~/Stocks.
