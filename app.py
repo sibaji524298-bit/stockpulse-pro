@@ -948,33 +948,74 @@ def manifest():
     )
 # === OPTION_A_INDICATORS_ENGINE_START ===
 import html as _html
+import time as _time
 import yfinance as _yf
 from indicator_engine import evaluate_stock_indicators as _eval_stock_indicators
 
 _OPTION_A_HELPER_INSTALLED = True
+_SPP_OHLCV_CACHE = {}
+_SPP_CACHE_TTL_SEC = 15.0
+
+_LOOKBACK_MAP = {
+    "30m": ("5d", "30m"),
+    "1h": ("5d", "60m"),
+    "60m": ("5d", "60m"),
+    "1d": ("1d", "15m"),
+    "5d": ("5d", "15m"),
+    "1w": ("5d", "15m"),
+    "1mo": ("1mo", "1d"),
+    "1m": ("1mo", "1d"),
+    "3mo": ("3mo", "1d"),
+    "3m": ("3mo", "1d"),
+    "6mo": ("6mo", "1d"),
+    "6m": ("6mo", "1d"),
+    "1y": ("1y", "1d"),
+    "2y": ("2y", "1d"),
+    "5y": ("5y", "1d"),
+    "10y": ("10y", "1d"),
+    "ytd": ("ytd", "1d"),
+    "max": ("max", "1d"),
+}
+
+def _resolve_lookback(period_text: str):
+    key = (period_text or "1y").strip().lower()
+    if key in _LOOKBACK_MAP:
+        return _LOOKBACK_MAP[key]
+    return ("1y", "1d")
+
+def _fetch_aligned_ohlcv(symbol_text: str, yf_period: str, interval: str):
+    sym = (symbol_text or "TCS.NS").strip().upper()
+    cache_key = (sym, yf_period, interval)
+    now = _time.monotonic()
+    cached = _SPP_OHLCV_CACHE.get(cache_key)
+    if cached and (now - cached[0]) <= _SPP_CACHE_TTL_SEC:
+        return cached[1].copy()
+
+    df = _yf.download(sym, period=yf_period, interval=interval, progress=False, auto_adjust=False)
+    if df is None or df.empty:
+        df = _yf.download(sym, period="6mo", interval="1d", progress=False, auto_adjust=False)
+    if df is None or df.empty:
+        return None
+    if hasattr(df.columns, "nlevels") and df.columns.nlevels > 1:
+        df.columns = df.columns.get_level_values(0)
+
+    _SPP_OHLCV_CACHE[cache_key] = (now, df.copy())
+    return df
 
 def _build_option_a_html(symbol_text: str, period_text: str = "1y") -> str:
     try:
-        sym = (symbol_text or "TCS.NS").strip()
-        yf_period = period_text if period_text in {
-            "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"
-        } else "1y"
-        interval = "15m" if yf_period in ("1d", "5d") else "1d"
-        df = _yf.download(sym, period=yf_period, interval=interval, progress=False, auto_adjust=False)
-        if df is None or df.empty:
-            df = _yf.download(sym, period="6mo", interval="1d", progress=False, auto_adjust=False)
+        sym = (symbol_text or "TCS.NS").strip().upper()
+        yf_period, interval = _resolve_lookback(period_text)
+        df = _fetch_aligned_ohlcv(sym, yf_period, interval)
         if df is None or df.empty:
             return ""
-        if hasattr(df.columns, "nlevels") and df.columns.nlevels > 1:
-            df.columns = df.columns.get_level_values(0)
 
-        bench_sym = "^NSEI" if sym.upper().endswith(".NS") or sym.upper().endswith(".BO") else "^GSPC"
+        bench_sym = "^NSEI" if sym.endswith(".NS") or sym.endswith(".BO") else "^GSPC"
         bench_df = None
         try:
-            b = _yf.download(bench_sym, period=yf_period if yf_period != "1d" else "5d", interval=interval, progress=False, auto_adjust=False)
+            bench_period = "5d" if yf_period == "1d" else yf_period
+            b = _fetch_aligned_ohlcv(bench_sym, bench_period, interval)
             if b is not None and not b.empty:
-                if hasattr(b.columns, "nlevels") and b.columns.nlevels > 1:
-                    b.columns = b.columns.get_level_values(0)
                 bench_df = b
         except Exception:
             bench_df = None
@@ -986,6 +1027,7 @@ def _build_option_a_html(symbol_text: str, period_text: str = "1y") -> str:
         weights = res["weights"]
         metrics = res["metrics"]
         catalog = res["catalog"]
+        bars_count = len(df)
 
         pills = []
         for fam, w in weights.items():
@@ -1026,7 +1068,7 @@ def _build_option_a_html(symbol_text: str, period_text: str = "1y") -> str:
             f'<section id="stockpulseOptionAPanel" style="margin:18px 0;padding:16px;border:1px solid #30363d;border-radius:12px;background:#0d1117;color:#e6edf3;">'
             f'<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;">'
             f'<div>'
-            f'<div style="font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#f59e0b;">Majority Rule Composite Verdict ({_html.escape(sym)})</div>'
+            f'<div style="font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#f59e0b;">Majority Rule Composite Verdict ({_html.escape(sym)} · {_html.escape(yf_period)} / {_html.escape(interval)} · {bars_count} bars)</div>'
             f'<div style="font-size:22px;font-weight:700;margin-top:2px;">{comp:+.2f} / 2.00 — {verdict}</div>'
             f'</div>'
             f'<div style="font-size:12px;color:#9ca3af;">RSI(14): {metrics["rsi14"]} | ADX(14): {metrics["adx14"]} | CMF(20): {metrics["cmf20"]} | Vol Ratio: {metrics["vol_ratio"]}x | ATR(14): {metrics["atr14"]}</div>'
@@ -1058,8 +1100,21 @@ def _inject_option_a_panel(response):
             body = response.get_data(as_text=True)
             if "</body>" in body and "stockpulseOptionAPanel" not in body:
                 from flask import request as _req
-                sym = _req.args.get("symbol") or _req.args.get("ticker") or (_req.form.get("symbol") if _req.form else None) or "TCS.NS"
-                per = _req.args.get("period") or (_req.form.get("period") if _req.form else None) or "1y"
+                sym = (
+                    _req.args.get("symbol")
+                    or _req.args.get("ticker")
+                    or (_req.form.get("symbol") if _req.form else None)
+                    or (_req.form.get("ticker") if _req.form else None)
+                    or "TCS.NS"
+                )
+                per = (
+                    _req.args.get("period")
+                    or _req.args.get("lookback")
+                    or _req.args.get("range")
+                    or (_req.form.get("period") if _req.form else None)
+                    or (_req.form.get("lookback") if _req.form else None)
+                    or "1y"
+                )
                 panel = _build_option_a_html(sym, per)
                 if panel:
                     body = body.replace("</body>", panel + "\n</body>", 1)
