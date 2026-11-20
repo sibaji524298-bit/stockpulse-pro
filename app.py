@@ -61,7 +61,7 @@ def fetch_history_cached(ticker, period):
         ts, df_cached = _CACHE[key]
         if now - ts < CACHE_TTL:
             return df_cached.copy()
-    df = fetch_history_cached(ticker, period)
+    df = yf.download(ticker, period=period, interval="1d", progress=False, auto_adjust=False)
     if not df.empty:
         _CACHE[key] = (now, df.copy())
     return df
