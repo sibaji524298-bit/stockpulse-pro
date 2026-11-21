@@ -947,14 +947,16 @@ def manifest():
         mimetype="application/json"
     )
 # === OPTION_A_INDICATORS_ENGINE_START ===
+from collections import OrderedDict as _OrderedDict
 import html as _html
 import time as _time
 import yfinance as _yf
 from indicator_engine import evaluate_stock_indicators as _eval_stock_indicators
 
 _OPTION_A_HELPER_INSTALLED = True
-_SPP_OHLCV_CACHE = {}
+_SPP_OHLCV_CACHE = _OrderedDict()
 _SPP_CACHE_TTL_SEC = 15.0
+_SPP_MAX_CACHE_ENTRIES = 24
 
 _LOOKBACK_MAP = {
     "30m": ("5d", "30m"),
@@ -983,12 +985,22 @@ def _resolve_lookback(period_text: str):
         return _LOOKBACK_MAP[key]
     return ("1y", "1d")
 
+def _prune_ohlcv_cache(now: float):
+    expired = [k for k, v in _SPP_OHLCV_CACHE.items() if (now - v[0]) > _SPP_CACHE_TTL_SEC]
+    for k in expired:
+        _SPP_OHLCV_CACHE.pop(k, None)
+    while len(_SPP_OHLCV_CACHE) > _SPP_MAX_CACHE_ENTRIES:
+        _SPP_OHLCV_CACHE.popitem(last=False)
+
 def _fetch_aligned_ohlcv(symbol_text: str, yf_period: str, interval: str):
     sym = (symbol_text or "TCS.NS").strip().upper()
     cache_key = (sym, yf_period, interval)
     now = _time.monotonic()
+    _prune_ohlcv_cache(now)
+
     cached = _SPP_OHLCV_CACHE.get(cache_key)
     if cached and (now - cached[0]) <= _SPP_CACHE_TTL_SEC:
+        _SPP_OHLCV_CACHE.move_to_end(cache_key)
         return cached[1].copy()
 
     df = _yf.download(sym, period=yf_period, interval=interval, progress=False, auto_adjust=False)
@@ -1000,6 +1012,7 @@ def _fetch_aligned_ohlcv(symbol_text: str, yf_period: str, interval: str):
         df.columns = df.columns.get_level_values(0)
 
     _SPP_OHLCV_CACHE[cache_key] = (now, df.copy())
+    _prune_ohlcv_cache(now)
     return df
 
 def _build_option_a_html(symbol_text: str, period_text: str = "1y") -> str:
@@ -1012,11 +1025,13 @@ def _build_option_a_html(symbol_text: str, period_text: str = "1y") -> str:
 
         bench_sym = "^NSEI" if sym.endswith(".NS") or sym.endswith(".BO") else "^GSPC"
         bench_df = None
+        bench_status = f"RS vs {bench_sym} (Neutral)"
         try:
             bench_period = "5d" if yf_period == "1d" else yf_period
             b = _fetch_aligned_ohlcv(bench_sym, bench_period, interval)
             if b is not None and not b.empty:
                 bench_df = b
+                bench_status = f"RS vs {bench_sym}"
         except Exception:
             bench_df = None
 
@@ -1068,7 +1083,7 @@ def _build_option_a_html(symbol_text: str, period_text: str = "1y") -> str:
             f'<section id="stockpulseOptionAPanel" style="margin:18px 0;padding:16px;border:1px solid #30363d;border-radius:12px;background:#0d1117;color:#e6edf3;">'
             f'<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;">'
             f'<div>'
-            f'<div style="font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#f59e0b;">Majority Rule Composite Verdict ({_html.escape(sym)} · {_html.escape(yf_period)} / {_html.escape(interval)} · {bars_count} bars)</div>'
+            f'<div style="font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#f59e0b;">Majority Rule Composite Verdict ({_html.escape(sym)} · {_html.escape(yf_period)} / {_html.escape(interval)} · {bars_count} bars · {_html.escape(bench_status)})</div>'
             f'<div style="font-size:22px;font-weight:700;margin-top:2px;">{comp:+.2f} / 2.00 — {verdict}</div>'
             f'</div>'
             f'<div style="font-size:12px;color:#9ca3af;">RSI(14): {metrics["rsi14"]} | ADX(14): {metrics["adx14"]} | CMF(20): {metrics["cmf20"]} | Vol Ratio: {metrics["vol_ratio"]}x | ATR(14): {metrics["atr14"]}</div>'

@@ -3,9 +3,14 @@ import numpy as np
 import pandas as pd
 
 
+_RULES_CACHE = {}
+
+
 def load_rules(path="indicators_rules.json"):
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    if path not in _RULES_CACHE:
+        with open(path, "r", encoding="utf-8") as f:
+            _RULES_CACHE[path] = json.load(f)
+    return _RULES_CACHE[path]
 
 
 def _sign_score(strong_bull, bull, bear, strong_bear):
