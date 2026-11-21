@@ -49,7 +49,60 @@ from ta.volume import (
     VolumeWeightedAveragePrice,
 )
 
+
+def format_last_bar_timestamp(df):
+    if df is None or getattr(df, "empty", True):
+        return "N/A"
+    try:
+        idx = df.index[-1]
+        if hasattr(idx, "strftime"):
+            return idx.strftime("%Y-%m-%d %H:%M")
+        return str(idx)
+    except Exception:
+        return "N/A"
+
+
+def build_intraday_alignment_summary(families_dict, metrics_dict=None):
+    bullish = []
+    bearish = []
+    for name, val in (families_dict or {}).items():
+        try:
+            score = float(val.get("score", val) if isinstance(val, dict) else val)
+        except (TypeError, ValueError):
+            score = 0.0
+        if score >= 0.25:
+            bullish.append(name)
+        elif score <= -0.25:
+            bearish.append(name)
+
+    if bullish and not bearish:
+        stance = f"{', '.join(bullish[:3])} agree bullish"
+    elif bearish and not bullish:
+        stance = f"{', '.join(bearish[:3])} agree bearish"
+    elif bullish and bearish:
+        stance = f"{', '.join(bullish[:2])} bullish vs {', '.join(bearish[:2])} bearish"
+    else:
+        stance = "Signals mixed/neutral across families"
+
+    rsi_note = "."
+    if isinstance(metrics_dict, dict) and metrics_dict.get("rsi") is not None:
+        try:
+            rsi_val = float(metrics_dict["rsi"])
+            if rsi_val >= 70:
+                rsi_note = f"; RSI(14) at {rsi_val:.1f} is overbought."
+            elif rsi_val <= 30:
+                rsi_note = f"; RSI(14) at {rsi_val:.1f} is oversold."
+            else:
+                rsi_note = f"; RSI(14) at {rsi_val:.1f} is neutral with room to move."
+        except (TypeError, ValueError):
+            rsi_note = "."
+
+    return f"Intraday Alignment: {stance}{rsi_note}"
+
 app = Flask(__name__)
+if isinstance(globals().get("_CACHE"), dict):
+    _CACHE.clear()
+
 
 _CACHE = {}
 CACHE_TTL = 15  # seconds
@@ -110,6 +163,89 @@ HTML = """
     .note { color: #94a3b8; font-size: 12px; margin-top: 14px; }
     canvas { max-height: 310px; width: 100%; }
   </style>
+
+<style>
+/* SP_COMPACT_3MM_OVERRIDE */
+.sp-verdict-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.2 !important;
+}
+.sp-verdict-score-row {
+    margin: 3mm 0 0 0 !important;
+    padding: 0 !important;
+    line-height: 1.15 !important;
+}
+.sp-intraday-alignment {
+    margin: 3mm 0 !important;
+    padding: 0 !important;
+    font-size: 0.86rem !important;
+    line-height: 1.25 !important;
+    color: #9ca3af !important;
+}
+.sp-family-row {
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin: 3mm 0 !important;
+    padding: 0 !important;
+}
+.sp-family-card {
+    padding: 7px 10px !important;
+    margin: 0 !important;
+}
+.sp-catalog-bar,
+details.sp-catalog {
+    margin: 3mm 0 0 0 !important;
+}
+@media (max-width: 900px) {
+    .sp-family-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+</style>
+<style id="sp_toggles_exact_fit">
+.toggles {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+}
+.toggles::-webkit-scrollbar {
+    display: none !important;
+}
+.toggles label {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 1mm !important;
+    margin: 0 6px 0 0 !important;
+    padding: 0 !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+}
+.toggles input[type="checkbox"] {
+    margin: 0 1mm 0 0 !important;
+    padding: 0 !important;
+    width: 12px !important;
+    height: 12px !important;
+    min-width: 12px !important;
+    vertical-align: middle !important;
+    flex: 0 0 auto !important;
+}
+</style>
 </head>
 <body>
   <div class="top-bar">
@@ -903,8 +1039,34 @@ def index():
         except Exception as exc:
             error = f"Error analyzing '{ticker}': {exc}"
 
+    _loc = locals()
+    _df_cand = _loc.get("df")
+    if _df_cand is None:
+        for _v in _loc.values():
+            if hasattr(_v, "index") and hasattr(_v, "empty") and not getattr(_v, "empty", True):
+                _df_cand = _v
+                break
+    _lb_ts = format_last_bar_timestamp(_df_cand)
+    _fam_ctx = (
+        _loc.get("families")
+        or _loc.get("family_scores")
+        or _loc.get("scores")
+        or _loc.get("fam_scores")
+        or {}
+    )
+    if not _fam_ctx:
+        for _k, _v in _loc.items():
+            if isinstance(_v, dict) and any(
+                "trend" in str(x).lower() or "momentum" in str(x).lower()
+                for x in _v.keys()
+            ):
+                _fam_ctx = _v
+                break
+    _met_ctx = _loc.get("metrics") or _loc.get("summary_metrics") or {}
+    _align_raw = build_intraday_alignment_summary(_fam_ctx, _met_ctx)
+    _align_txt = _align_raw.replace("Intraday Alignment: ", "", 1) if isinstance(_align_raw, str) else "Signals aligned across core families."
     return render_template_string(
-        HTML,
+        HTML, last_bar_ts=format_last_bar_timestamp(locals().get('df')), intraday_alignment_text=build_intraday_alignment_summary(locals().get('families', {}), locals().get('metrics', {})).replace('Intraday Alignment: ', '', 1),
         ticker=ticker,
         period=period,
         rows=rows,
@@ -1049,15 +1211,29 @@ def _build_option_a_html(symbol_text: str, period_text: str = "1y") -> str:
         metrics = res["metrics"]
         catalog = res["catalog"]
         bars_count = len(df)
+        last_bar_ts = format_last_bar_timestamp(df)
+        rsi_val = metrics.get("rsi14") if isinstance(metrics, dict) else None
+        intraday_alignment = build_intraday_alignment_summary(
+            fscores, {"rsi": rsi_val} if rsi_val is not None else metrics
+        ).replace("Intraday Alignment: ", "", 1)
 
         pills = []
         for fam, w in weights.items():
-            sc = fscores.get(fam, 0.0)
+            sc = float(fscores.get(fam, 0.0) or 0.0)
             pct = int(round(float(w) * 100))
+            if sc > 0:
+                val_color = "#22c55e"
+                border_color = "#14532d"
+            elif sc < 0:
+                val_color = "#ef4444"
+                border_color = "#7f1d1d"
+            else:
+                val_color = "#e5e7eb"
+                border_color = "#30363d"
             pills.append(
-                f'<div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px 12px;min-width:165px;">'
-                f'<div style="font-size:12px;color:#9ca3af;">{_html.escape(fam)} ({pct}%)</div>'
-                f'<div style="font-size:16px;font-weight:700;color:#f3f4f6;">{sc:+.2f}</div>'
+                f'<div style="background:#161b22;border:1px solid {border_color};border-radius:8px;padding:7px 10px;min-width:130px;flex:1 1 0;">'
+                f'<div style="font-size:11px;color:#9ca3af;white-space:nowrap;">{_html.escape(fam)} ({pct}%)</div>'
+                f'<div style="font-size:15px;font-weight:700;color:{val_color};margin-top:2px;">{sc:+.2f}</div>'
                 f'</div>'
             )
 
@@ -1086,15 +1262,16 @@ def _build_option_a_html(symbol_text: str, period_text: str = "1y") -> str:
         )
 
         return (
-            f'<section id="stockpulseOptionAPanel" style="margin:18px 0;padding:16px;border:1px solid #30363d;border-radius:12px;background:#0d1117;color:#e6edf3;">'
-            f'<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;">'
+            f'<section id="stockpulseOptionAPanel" style="margin:3mm 0;padding:12px;border:1px solid #30363d;border-radius:12px;background:#0d1117;color:#e6edf3;">'
+            f'<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3mm;">'
             f'<div>'
-            f'<div style="font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#f59e0b;">Majority Rule Composite Verdict ({_html.escape(sym)} · {_html.escape(yf_period)} / {_html.escape(interval)} · {bars_count} bars · {_html.escape(bench_status)})</div>'
-            f'<div style="font-size:22px;font-weight:700;margin-top:2px;">{comp:+.2f} / 2.00 — {verdict}</div>'
+            f'<div style="font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#f59e0b;">Majority Rule Composite Verdict ({_html.escape(sym)} · {_html.escape(yf_period)} / {_html.escape(interval)} · {bars_count} bars · {_html.escape(bench_status)} · LAST BAR: {_html.escape(str(last_bar_ts))})</div>'
+            f'<div style="font-size:22px;font-weight:700;margin-top:3mm;">{comp:+.2f} / 2.00 — {verdict}</div>'
+            f'<div style="margin:3mm 0;font-size:13px;line-height:1.25;color:#9ca3af;"><strong>Intraday Alignment:</strong> {_html.escape(str(intraday_alignment))}</div>'
             f'</div>'
             f'<div style="font-size:12px;color:#9ca3af;">RSI(14): {metrics["rsi14"]} | ADX(14): {metrics["adx14"]} | CMF(20): {metrics["cmf20"]} | Vol Ratio: {metrics["vol_ratio"]}x | ATR(14): {metrics["atr14"]}</div>'
             f'</div>'
-            f'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">' + "".join(pills) + f'</div>'
+            f'<div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;margin:3mm 0;">' + "".join(pills) + f'</div>'
             f'<details style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px;">'
             f'<summary style="cursor:pointer;font-weight:600;">104-Indicator Reference Catalog (Searchable)</summary>'
             f'<div style="margin:10px 0;">'
