@@ -949,13 +949,16 @@ def manifest():
 # === OPTION_A_INDICATORS_ENGINE_START ===
 from collections import OrderedDict as _OrderedDict
 import html as _html
+import threading as _threading
 import time as _time
 import yfinance as _yf
 from indicator_engine import evaluate_stock_indicators as _eval_stock_indicators
 
 _OPTION_A_HELPER_INSTALLED = True
 _SPP_OHLCV_CACHE = _OrderedDict()
-_SPP_CACHE_TTL_SEC = 15.0
+_SPP_CACHE_LOCK = _threading.Lock()
+_SPP_CACHE_TTL_SEC = 25.0
+_SPP_BENCH_CACHE_TTL_SEC = 60.0
 _SPP_MAX_CACHE_ENTRIES = 24
 
 _LOOKBACK_MAP = {
@@ -985,23 +988,24 @@ def _resolve_lookback(period_text: str):
         return _LOOKBACK_MAP[key]
     return ("1y", "1d")
 
-def _prune_ohlcv_cache(now: float):
-    expired = [k for k, v in _SPP_OHLCV_CACHE.items() if (now - v[0]) > _SPP_CACHE_TTL_SEC]
+def _prune_ohlcv_cache_unlocked(now: float):
+    expired = [k for k, v in _SPP_OHLCV_CACHE.items() if now > v[0]]
     for k in expired:
         _SPP_OHLCV_CACHE.pop(k, None)
     while len(_SPP_OHLCV_CACHE) > _SPP_MAX_CACHE_ENTRIES:
         _SPP_OHLCV_CACHE.popitem(last=False)
 
-def _fetch_aligned_ohlcv(symbol_text: str, yf_period: str, interval: str):
+def _fetch_aligned_ohlcv(symbol_text: str, yf_period: str, interval: str, ttl_sec: float = _SPP_CACHE_TTL_SEC):
     sym = (symbol_text or "TCS.NS").strip().upper()
     cache_key = (sym, yf_period, interval)
     now = _time.monotonic()
-    _prune_ohlcv_cache(now)
 
-    cached = _SPP_OHLCV_CACHE.get(cache_key)
-    if cached and (now - cached[0]) <= _SPP_CACHE_TTL_SEC:
-        _SPP_OHLCV_CACHE.move_to_end(cache_key)
-        return cached[1].copy()
+    with _SPP_CACHE_LOCK:
+        _prune_ohlcv_cache_unlocked(now)
+        cached = _SPP_OHLCV_CACHE.get(cache_key)
+        if cached and now <= cached[0]:
+            _SPP_OHLCV_CACHE.move_to_end(cache_key)
+            return cached[1].copy()
 
     df = _yf.download(sym, period=yf_period, interval=interval, progress=False, auto_adjust=False)
     if df is None or df.empty:
@@ -1011,15 +1015,17 @@ def _fetch_aligned_ohlcv(symbol_text: str, yf_period: str, interval: str):
     if hasattr(df.columns, "nlevels") and df.columns.nlevels > 1:
         df.columns = df.columns.get_level_values(0)
 
-    _SPP_OHLCV_CACHE[cache_key] = (now, df.copy())
-    _prune_ohlcv_cache(now)
+    exp_at = _time.monotonic() + float(ttl_sec)
+    with _SPP_CACHE_LOCK:
+        _SPP_OHLCV_CACHE[cache_key] = (exp_at, df.copy())
+        _prune_ohlcv_cache_unlocked(_time.monotonic())
     return df
 
 def _build_option_a_html(symbol_text: str, period_text: str = "1y") -> str:
     try:
         sym = (symbol_text or "TCS.NS").strip().upper()
         yf_period, interval = _resolve_lookback(period_text)
-        df = _fetch_aligned_ohlcv(sym, yf_period, interval)
+        df = _fetch_aligned_ohlcv(sym, yf_period, interval, ttl_sec=_SPP_CACHE_TTL_SEC)
         if df is None or df.empty:
             return ""
 
@@ -1028,7 +1034,7 @@ def _build_option_a_html(symbol_text: str, period_text: str = "1y") -> str:
         bench_status = f"RS vs {bench_sym} (Neutral)"
         try:
             bench_period = "5d" if yf_period == "1d" else yf_period
-            b = _fetch_aligned_ohlcv(bench_sym, bench_period, interval)
+            b = _fetch_aligned_ohlcv(bench_sym, bench_period, interval, ttl_sec=_SPP_BENCH_CACHE_TTL_SEC)
             if b is not None and not b.empty:
                 bench_df = b
                 bench_status = f"RS vs {bench_sym}"
