@@ -5,7 +5,7 @@ Continue working on **TinyCapitalCapital StockPulse Pro** ("Small Capital. Big D
 - **Local Working Directory:** ~/Stocks (in Termux on Android)
 - **Core Stack:** Python (Flask, yfinance, pandas, numpy, ta), gunicorn, HTML/Tailwind CSS, Chart.js with toggle overlays (including SuperTrend and Bollinger Bands), 100+ technical indicators with Buy/Sell/Hold counts and an aggregate score (e.g., Score: +0.60 (Buy: 68 | Sell: 14 | Hold: 22) Indicators Shown: 104), rule-based verdict (OVERALL: BUY / SELL / HOLD), 10-second auto-refresh UI with a pause toggle, 15-second in-memory cache (_CACHE, CACHE_TTL = 15), and PWA support (manifest.json, SVG icons).
 - **GitHub Repository:** https://github.com/sibaji524298-bit/stockpulse-pro.git (branch: main)
-- **Live Render URL:** https://stockpulse-pro-80bo.onrender.com
+- **Live Render URL:** https://tinycapitalclub.onrender.com
 - **Render Web Service Settings:**
   - Language/Runtime: Python 3
   - Branch: main
@@ -22,7 +22,7 @@ Continue working on **TinyCapitalCapital StockPulse Pro** ("Small Capital. Big D
 6. Prepared fix_tcs_recursion.py (_clean_ohlcv to flatten MultiIndex columns and normalize 1D float64 Open/High/Low/Close/Volume series if needed), documented the end-to-end deploy and rollback plan (git revert, git checkout <commit> -- app.py, and Render dashboard rollback), and saved a runbook to ~/Stocks/RUNBOOK.md.
 
 ### How to Assist Me
-- Treat ~/Stocks/app.py on main (commit 03b229e and later updates) and https://stockpulse-pro-80bo.onrender.com as the active baseline.
+- Treat ~/Stocks/app.py on main (commit 03b229e and later updates) and https://tinycapitalclub.onrender.com as the active baseline.
 - Provide clear, copy-pasteable Termux commands with brief verification checks, without altering working auth/token setups unnecessarily.
 - Help me with any next enhancements, indicator/chart tweaks, bug fixes, Git/Render deployments, or rollbacks I ask for.
 
@@ -35,7 +35,7 @@ Continue working on **TinyCapitalCapital StockPulse Pro** ("Small Capital. Big D
 - App Title: Tiny Capital Club StockPulse Pro.
 - Header Logo: 88px circular logo aligned inline with the title using static/logo.png.
 - Controls & Refresh: Lookback periods from 30m through max; 20s auto-refresh active.
-- Hosting: GitHub main branch (sibaji524298-bit/stockpulse-pro.git) deployed on Render (https://stockpulse-pro-80bo.onrender.com).
+- Hosting: GitHub main branch (sibaji524298-bit/stockpulse-pro.git) deployed on Render (https://tinycapitalclub.onrender.com).
 - Backups: Updated app.py.bak and created a timestamped backup in ~/Stocks.
 
 ---

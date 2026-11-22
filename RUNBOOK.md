@@ -1,6 +1,6 @@
 # TinyCapitalCapital StockPulse Pro — Scripts, Deploy & Rollback Guide
 
-Live URL: https://stockpulse-pro-80bo.onrender.com
+Live URL: https://tinycapitalclub.onrender.com
 Repository: https://github.com/sibaji524298-bit/stockpulse-pro.git
 
 ## 1. Core Scripts
