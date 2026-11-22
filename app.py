@@ -62,6 +62,67 @@ def format_last_bar_timestamp(df):
         return "N/A"
 
 
+def build_quick_action_verdict(composite_score, family_scores, metrics):
+    """Combine composite score, family agreement, ADX, volume/CMF, and RSI into BUY / HOLD / SELL."""
+    try:
+        comp = float(composite_score or 0.0)
+    except Exception:
+        comp = 0.0
+
+    fam_map = {}
+    if isinstance(family_scores, dict):
+        for k, v in family_scores.items():
+            try:
+                fam_map[str(k).lower()] = float(v)
+            except Exception:
+                pass
+    elif isinstance(family_scores, (list, tuple)):
+        for item in family_scores:
+            if isinstance(item, dict):
+                name = str(item.get("name") or item.get("family") or "").lower()
+                try:
+                    fam_map[name] = float(item.get("score") or item.get("value") or 0.0)
+                except Exception:
+                    pass
+
+    trend_s = next((v for k, v in fam_map.items() if "trend" in k), comp)
+    mom_s = next((v for k, v in fam_map.items() if "momentum" in k), comp)
+
+    m = metrics if isinstance(metrics, dict) else {}
+    def _num(keys, default):
+        for key in keys:
+            if key in m and m[key] is not None:
+                try:
+                    return float(str(m[key]).replace("x", "").strip())
+                except Exception:
+                    pass
+        return default
+
+    rsi = _num(["rsi", "rsi14", "RSI(14)", "RSI"], 50.0)
+    adx = _num(["adx", "adx14", "ADX(14)", "ADX"], 20.0)
+    cmf = _num(["cmf", "cmf20", "CMF(20)", "CMF"], 0.0)
+    vol_r = _num(["vol_ratio", "Vol Ratio", "volRatio"], 1.0)
+
+    if adx < 18.0:
+        return ("HOLD", "#facc15", "rgba(250, 204, 21, 0.14)", f"Weak/choppy trend (ADX {adx:.1f} < 18) — wait for clearer direction")
+
+    if comp >= 0.35 and trend_s > 0 and mom_s > 0:
+        if rsi > 72.0:
+            return ("HOLD", "#facc15", "rgba(250, 204, 21, 0.14)", f"Bullish trend but RSI {rsi:.1f} is stretched — avoid chasing highs")
+        if cmf < -0.15 and vol_r < 0.8:
+            return ("HOLD", "#facc15", "rgba(250, 204, 21, 0.14)", "Price leans up but volume/money flow is weak — wait for confirmation")
+        return ("BUY", "#22c55e", "rgba(34, 197, 94, 0.16)", f"Trend & Momentum aligned bullish (ADX {adx:.1f}, RSI {rsi:.1f})")
+
+    if comp <= -0.35 and trend_s < 0 and mom_s < 0:
+        if rsi < 28.0:
+            return ("HOLD", "#facc15", "rgba(250, 204, 21, 0.14)", f"Bearish trend but RSI {rsi:.1f} is oversold — watch for bounce risk")
+        if cmf > 0.15 and vol_r < 0.8:
+            return ("HOLD", "#facc15", "rgba(250, 204, 21, 0.14)", "Price leans down but selling volume is light — wait for confirmation")
+        return ("SELL", "#ef4444", "rgba(239, 68, 68, 0.16)", f"Trend & Momentum aligned bearish (ADX {adx:.1f}, RSI {rsi:.1f})")
+
+    return ("HOLD", "#facc15", "rgba(250, 204, 21, 0.14)", "Mixed family signals — no clean multi-factor agreement yet")
+
+
 def build_intraday_alignment_summary(families_dict, metrics_dict=None):
     bullish = []
     bearish = []
@@ -279,7 +340,8 @@ details.sp-catalog {
   {% if verdict %}
     <div class="summary-card">
       <div><strong>{{ ticker }}</strong> — Latest Close: <strong>{{ price }}</strong> ({{ period }})</div>
-      <span class="badge {{ verdict_class }}">OVERALL: {{ verdict }}</span>
+      <span class="badge {{ verdict_class }}" style="color:{{ quick_action_color }};background:{{ quick_action_bg }};border-color:{{ quick_action_color }};">OVERALL: {{ quick_action_label }}</span>
+      <div style="font-size:12px;color:#cbd5e1;margin:2mm 0;">{{ quick_action_reason }}</div>
       <div>Score: <strong>{{ score }}</strong> (Buy: {{ buy_count }} | Sell: {{ sell_count }} | Hold: {{ hold_count }})</div>
       <div>Indicators Shown: <strong>{{ total_rows }}</strong></div>
     </div>
@@ -1065,6 +1127,8 @@ def index():
     _met_ctx = _loc.get("metrics") or _loc.get("summary_metrics") or {}
     _align_raw = build_intraday_alignment_summary(_fam_ctx, _met_ctx)
     _align_txt = _align_raw.replace("Intraday Alignment: ", "", 1) if isinstance(_align_raw, str) else "Signals aligned across core families."
+    _qa = build_quick_action_verdict(locals().get('composite_score', locals().get('score', 0.0)), locals().get('family_scores', locals().get('families', {})), locals().get('metrics', {}))
+    _qa = build_quick_action_verdict(locals().get('composite_score', locals().get('score', 0.0)), locals().get('family_scores', locals().get('families', {})), locals().get('metrics', {}))
     return render_template_string(
         HTML, last_bar_ts=format_last_bar_timestamp(locals().get('df')), intraday_alignment_text=build_intraday_alignment_summary(locals().get('families', {}), locals().get('metrics', {})).replace('Intraday Alignment: ', '', 1),
         ticker=ticker,
@@ -1080,6 +1144,10 @@ def index():
         sell_count=sell_count,
         hold_count=hold_count,
         chart_json=chart_json,
+        quick_action_label=_qa[0],
+        quick_action_color=_qa[1],
+        quick_action_bg=_qa[2],
+        quick_action_reason=_qa[3],
     )
 
 
